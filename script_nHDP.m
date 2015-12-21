@@ -14,6 +14,7 @@ end
 % contained in Xid_batch and Xcnt_batch
 beta0 = .1; % this parameter is the Dirichlet base distribution and can be played with
 for i = 1:1000
+    disp(['iteration ' num2str(i)])
     [a,b] = sort(rand(1,length(Xid)));
     rho = (1+i)^-.75; % step size can also be played with
     Xid_batch = Xid(b(1:2000));
