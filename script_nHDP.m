@@ -1,5 +1,6 @@
 % initialize / use a large subset of documents (e.g., 10,000) contained in Xid and Xcnt to initialize
-num_topics = [20 10 5];
+%num_topics = [20 10 5];
+num_topics = [5 4 3];
 scale = 100000;
 Tree = nHDP_init(Xid,Xcnt,num_topics,scale);
 for i = 1:length(Tree)
