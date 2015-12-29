@@ -20,7 +20,7 @@ spaces = findstr(' ', s);
 spaces = spaces(spaces < hash);
 colons = findstr(':', s);
 
-num_types = length(spaces) + 1;
+num_types = length(spaces);
 doc_ids = zeros(1,num_types);
 doc_counts = zeros(1,num_types);
 
