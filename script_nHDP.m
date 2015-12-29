@@ -78,39 +78,5 @@ for i = 1:length(Tree)
     Tree(i).beta_cnt = (1 - init_rand_frac)*Tree(i).beta_cnt + init_rand_frac*scale*vec/sum(vec);
 end
 
-% main loop / to modify this, at each iteration send in a new subset of docs
-% contained in Xid_batch and Xcnt_batch
 i = 1;
-while true
-    disp(['iteration ' num2str(i)])
-    log2i = log2(i);
-    if ceil(log2i) == log2i
-        path = sprintf('%s-%d.mat', name, i);
-        disp(['saving to ' path])
-        save(path, '-v7.3', 'name', 'num_topics', 'scale', 'beta0', 'batch_size', 'i', 'Tree');
-    end
-
-    %[a,b] = sort(rand(1,length(Xid)));
-    %Xid_batch = Xid(b(1:2000));
-    %Xcnt_batch = Xcnt(b(1:2000));
-
-    reply = command(input_db, 'srandmember %s %d', data_key, batch_size);
-    if reply.type ~= redisReplyType.ARRAY
-        if reply.type == redisReplyType.ERROR
-            disp(reply.data)
-        else
-            disp(reply.type)
-        end
-        error('unexpected reply to dataset srandmember')
-    end
-    [Xid_batch, Xcnt_batch, status] = parse_redis_docs(reply);
-    if ~status
-        error('document parse error')
-    end
-
-    tic
-    rho = (iota+i)^-kappa; % step size can also be played with
-    Tree = nHDP_step(Xid_batch,Xcnt_batch,Tree,scale,rho,beta0);
-    i = i + 1;
-    toc
-end
+loop_nHDP;
