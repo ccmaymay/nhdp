@@ -2,6 +2,7 @@
 % contained in Xid_batch and Xcnt_batch
 addpath /scratch/groups/bvandur1/redis-mat
 input_db = redis(input_host, input_port);
+appendCommand(input_db, 'srandmember %s %d', data_key, batch_size);
 while true
     disp(['iteration ' num2str(i)])
     log2i = log2(i);
@@ -15,7 +16,7 @@ while true
     %Xid_batch = Xid(b(1:2000));
     %Xcnt_batch = Xcnt(b(1:2000));
 
-    reply = command(input_db, 'srandmember %s %d', data_key, batch_size);
+    reply = getReply(input_db);
     if reply.type ~= redisReplyType.ARRAY
         if reply.type == redisReplyType.ERROR
             disp(reply.data)
@@ -28,6 +29,7 @@ while true
     if ~status
         error('document parse error')
     end
+    appendCommand(input_db, 'srandmember %s %d', data_key, batch_size);
 
     tic
     rho = (iota+i)^-kappa; % step size can also be played with
