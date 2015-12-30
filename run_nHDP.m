@@ -93,5 +93,5 @@ function run_nHDP(name, input_host, input_port, data_key, vocab_key, num_topics,
         Tree(i).beta_cnt = (1 - init_rand_frac)*Tree(i).beta_cnt + init_rand_frac*scale*vec/sum(vec);
     end
 
-    loop_nHDP(name, input_host, input_port, data_key, vocab_key, num_topics, batch_size, scale, rho, beta0, iota, kappa, Tree);
+    loop_nHDP(name, input_host, input_port, data_key, vocab_key, num_topics, batch_size, scale, beta0, iota, kappa, Tree);
 end

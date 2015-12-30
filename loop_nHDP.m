@@ -1,7 +1,9 @@
-function loop_nHDP(name, input_host, input_port, data_key, vocab_key, num_topics, batch_size, scale, rho, beta0, iota, kappa, Tree, i)
+function loop_nHDP(name, input_host, input_port, data_key, vocab_key, num_topics, batch_size, scale, beta0, iota, kappa, Tree, i)
     if nargin < 14
         i = 1;
     end
+
+    rho = 1;
 
     addpath /scratch/groups/bvandur1/redis-mat
     input_db = redis(input_host, input_port);
