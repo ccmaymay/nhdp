@@ -34,6 +34,7 @@ while true
     tic
     rho = (iota+i)^-kappa; % step size can also be played with
     Tree = nHDP_step(Xid_batch,Xcnt_batch,Tree,scale,rho,beta0);
-    i = i + 1;
     toc
+
+    i = i + 1;
 end
