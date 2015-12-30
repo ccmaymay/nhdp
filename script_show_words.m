@@ -1,22 +1,26 @@
 % display vocabulary results. the vocabulary is in a cell called vocab.
-num_words = 5;
+addpath /scratch/groups/bvandur1/redis-mat
+input_db = redis(input_host, input_port);
+vocab = load_vocab(input_db, vocab_key);
+num_words = 10;
 [ElnB,ElnPtop,id_parent,id_me] = func_process_tree(Tree,beta0,5); % this only needs to be done once
 for idx=1:num_topics(1)
     idx_c = find(id_parent==id_me(idx));
-    disp(sprintf('*** This node: %d ***', idx));
-    disp(['Count ' num2str(Tree(idx).cnt)]);
+    fprintf('Node %d (%f)', idx, Tree(idx).cnt)
     [a,b] = sort(Tree(idx).beta_cnt,'descend');
     for w = 1:num_words
-        disp(['   ' vocab{b(w)}]);
+        fprintf('  %s', vocab{b(w)});
     end
+    fprintf('\n');
     if ~isempty(idx_c)
         for i = 1:length(idx_c)
-            disp(['Child ' num2str(i) ' : Count ' num2str(Tree(idx_c(i)).cnt) ' : Index ' num2str(idx_c(i))]);
+            fprintf('Child %d (%d) (%f)', i, idx_c(i), Tree(idx_c(i)).cnt);
             [a,b] = sort(Tree(idx_c(i)).beta_cnt,'descend');
             for w = 1:num_words
-                disp(['   ' vocab{b(w)}]);
+                fprintf('  %s', vocab{b(w)});
             end
+            fprintf('\n');
         end
     end
-    disp(' ')
+    fprintf('\n');
 end
