@@ -5,7 +5,6 @@ function loop_nHDP(name, input_host, input_port, data_key, vocab_key, num_topics
 
     rho = 1;
 
-    addpath /scratch/groups/bvandur1/redis-mat
     input_db = redis(input_host, input_port);
     appendCommand(input_db, 'srandmember %s %d', data_key, batch_size);
     while true

@@ -1,5 +1,4 @@
 % display vocabulary results. the vocabulary is in a cell called vocab.
-addpath /scratch/groups/bvandur1/redis-mat
 input_db = redis(input_host, input_port);
 vocab = load_vocab(input_db, vocab_key);
 num_words = 10;

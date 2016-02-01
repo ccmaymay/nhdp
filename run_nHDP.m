@@ -29,7 +29,6 @@ function run_nHDP(name, input_host, input_port, data_key, vocab_key, num_topics,
         max_init_batch_size = 10000;
     end
 
-    addpath /scratch/groups/bvandur1/redis-mat
     input_db = redis(input_host, input_port);
 
     level_num_topics = 1;
