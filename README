@@ -1,0 +1,4 @@
+Comments and slight modifications to the nHDP learning software by
+John Paisley: http://www.columbia.edu/~jwp2128/code/nHDP.zip
+
+Use this command to see all changes: git diff 0d196e6
