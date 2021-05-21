@@ -140,9 +140,13 @@ for d = 1:D
     B_up(idx_pick,Xid{d}) = B_up(idx_pick,Xid{d}) + C_d.*repmat(Xcnt{d},length(idx_pick),1);
     weight_up(idx_pick) = weight_up(idx_pick) + 1;
 end
-subplot(2,2,[1 3]); stem(sum(B_up,2));
-subplot(2,2,2); bar(hist(size_subtree,1:20));
-subplot(2,2,4); bar(hist_levels/D);
+%sum(B_up,2)
+rho
+[subtree_size_hist_counts, subtree_size_hist_edges] = histcounts(size_subtree);
+subtree_size_hist_edges
+subtree_size_hist_counts
+%normalized_hist_levels = hist_levels/D;
+%normalized_hist_levels
 
 % update tree
 for i = 1:tot_tops
