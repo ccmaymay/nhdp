@@ -1,14 +1,10 @@
-function Tree = nHDP_init(Xid,Xcnt,num_topics,scale)
+function Tree = nHDP_init(Xid,Xcnt,num_topics,scale,Voc)
 % NHDP_INIT initializes the nHDP algorithm using a tree-structured k-means algorithm.
 %
 % Written by John Paisley, jpaisley@berkeley.edu
 
 L = length(num_topics);
 D = length(Xid);
-Voc = 0;
-for d = 1:D
-    Voc = max(Voc,max(Xid{d}));
-end
 X = zeros(Voc,D);
 for d = 1:D
     X(Xid{d},d) = Xcnt{d}'/sum(Xcnt{d});
