@@ -142,13 +142,12 @@ for d = 1:D
     B_up(idx_pick,X_d_ids) = B_up(idx_pick,X_d_ids) + C_d.*repmat(X_d_vals,length(idx_pick),1);
     weight_up(idx_pick) = weight_up(idx_pick) + 1;
 end
+%rho
 %sum(B_up,2)
-rho
-[subtree_size_hist_counts, subtree_size_hist_edges] = histcounts(size_subtree);
-subtree_size_hist_edges
-subtree_size_hist_counts
 %normalized_hist_levels = hist_levels/D;
 %normalized_hist_levels
+disp('subtree size distribution:')
+ascii_plot_histogram(size_subtree);
 
 % update tree
 for i = 1:tot_tops

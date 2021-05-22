@@ -39,7 +39,8 @@ if ~exist('rho_exp', 'var')
     rho_exp = 0.75;
 end
 
-D = size(X, 1);
+[D, Voc] = size(X);
+fprintf('corpus has %d documents spanning %d words\n', D, Voc);
 init_size = min(D, init_size);
 batch_size = min(D, batch_size);
 
