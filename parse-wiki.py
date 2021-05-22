@@ -72,7 +72,7 @@ def parse_wikitext(input_path, output_path, vocab_path):
     with open(output_path, 'w') as f:
         for (doc_idx, doc) in enumerate(docs):
             for (word_idx, count) in sorted(doc.items()):
-                print('{} {} {}'.format(doc_idx, word_idx, count), file=f)
+                print('{} {} {}'.format(doc_idx + 1, word_idx + 1, count), file=f)
 
             pb.update(1)
 

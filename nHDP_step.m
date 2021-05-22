@@ -1,18 +1,16 @@
-function Tree = nHDP_step(Xid,Xcnt,Tree,scale,rho,beta0)
+function Tree = nHDP_step(X,Tree,scale,rho,beta0)
 % NHDP_STEP performs one step of stochastic variational inference 
 % for the nested hierarchical Dirichlet process.
 %
 % *** INPUT (mini-batch) ***
-% Xid{d} : contains vector of word indexes for document d
-% Xcnt{d} : contains vector of word counts corresponding to Xid{d}
+% X : contains word counts for each doc (row) and word (col)
 % Tree : current top-level of nHDP
 % rho : step size
 %
 % Written by John Paisley, jpaisley@berkeley.edu
 
-Voc = length(Tree(1).beta_cnt);
 tot_tops = length(Tree);
-D = length(Xid);
+[D,Voc] = size(X);
 size_subtree = zeros(1,D);
 hist_levels = zeros(1,10);
 
@@ -47,7 +45,11 @@ level_penalty = psi(gamma3) - psi(gamma3+gamma4) + sum(Tree_mat,1)'*(psi(gamma4)
 
 % main loop
 for d = 1:D
-    ElnB_d = ElnB(:,Xid{d});                                            % pick out words in document for penalty
+    X_d = X(d,:);
+    X_d_ids = find(X_d)';
+    X_d_vals = nonzeros(X_d)';
+
+    ElnB_d = ElnB(:,X_d_ids);                                            % pick out words in document for penalty
     ElnV = psi(1) - psi(1+gamma2);
     Eln1_V = psi(gamma2) - psi(1+gamma2);
     ElnP_d = zeros(tot_tops,1) - inf;                                   % -inf removes non-activated topics by giving them zero probability
@@ -60,9 +62,9 @@ for d = 1:D
     vec_DPweights = zeros(tot_tops,1);                                  % ElnP_d minus the level penalty
     while bool
         idx_active = find(ElnP_d > -inf);                                             % index of active (selected and potential) nodes
-        penalty = ElnB_d(idx_active,:) + repmat(ElnP_d(idx_active),1,length(Xid{d}));
+        penalty = ElnB_d(idx_active,:) + repmat(ElnP_d(idx_active),1,length(X_d_ids));
         C_act = penalty;
-        penalty = penalty.*repmat(Xcnt{d},size(penalty,1),1);
+        penalty = penalty.*repmat(X_d_vals,size(penalty,1),1);
         ElnPtop_act = ElnPtop(idx_active);
         if isempty(idx_pick)
             score = sum(penalty,2) + ElnPtop_act;
@@ -82,7 +84,7 @@ for d = 1:D
             denominator = C_act + repmat(sum(C_act(idx_clps,:),1),num_act,1);
             vec = sum(C_act(idx_clps,:).*log(eps+C_act(idx_clps,:)),1);
             H = log(denominator) - (C_act.*log(C_act+eps) + repmat(vec,num_act,1))./denominator;
-            score = sum(numerator./denominator,2) + ElnPtop_act + H*Xcnt{d}';
+            score = sum(numerator./denominator,2) + ElnPtop_act + H*X_d_vals';
             score(idx_clps) = -inf;          
             [temp,idx_this] = max(score);
             idx_pick(end+1) = idx_active(idx_this);
@@ -118,18 +120,18 @@ for d = 1:D
 
   % learn document parameters for subtree
     T = length(idx_pick);
-    ElnB_d = ElnB(idx_pick,Xid{d});
+    ElnB_d = ElnB(idx_pick,X_d_ids);
     ElnP_d = 0*ElnP_d(idx_pick) - 1;
     cnt_old = zeros(length(idx_pick),1);
     bool_this = 1;
     num = 0;
     while bool_this
         num = num+1;
-        C_d = ElnB_d + repmat(ElnP_d,1,length(Xid{d}));
+        C_d = ElnB_d + repmat(ElnP_d,1,length(X_d_ids));
         C_d = C_d - repmat(max(C_d,[],1),T,1);
         C_d = exp(C_d);
         C_d = C_d./repmat(sum(C_d,1),T,1);
-        cnt = C_d*Xcnt{d}';
+        cnt = C_d*X_d_vals';
         ElnP_d = func_doc_weight_up(cnt,id_parent(idx_pick),gamma2,gamma3,gamma4,Tree_mat(idx_pick,idx_pick));
         if sum(abs(cnt-cnt_old))/sum(cnt) < 10^-3 || num == 50
             bool_this = 0;
@@ -137,7 +139,7 @@ for d = 1:D
         cnt_old = cnt;
 %         stem(cnt); title(num2str(num)); pause(.1);
     end
-    B_up(idx_pick,Xid{d}) = B_up(idx_pick,Xid{d}) + C_d.*repmat(Xcnt{d},length(idx_pick),1);
+    B_up(idx_pick,X_d_ids) = B_up(idx_pick,X_d_ids) + C_d.*repmat(X_d_vals,length(idx_pick),1);
     weight_up(idx_pick) = weight_up(idx_pick) + 1;
 end
 %sum(B_up,2)
