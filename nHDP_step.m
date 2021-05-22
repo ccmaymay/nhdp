@@ -1,5 +1,5 @@
 function Tree = nHDP_step(X,Tree,scale,rho,beta0)
-% NHDP_STEP performs one step of stochastic variational inference 
+% NHDP_STEP performs one step of stochastic variational inference
 % for the nested hierarchical Dirichlet process.
 %
 % *** INPUT (mini-batch) ***
@@ -9,14 +9,19 @@ function Tree = nHDP_step(X,Tree,scale,rho,beta0)
 %
 % Written by John Paisley, jpaisley@berkeley.edu
 
-tot_tops = length(Tree);
+num_topics = length(Tree);
 [D,Voc] = size(X);
-size_subtree = zeros(1,D);
-hist_levels = zeros(1,10);
+subtree_sizes = zeros(1,D);
+num_levels = 0;
+for i = 1:num_topics
+    num_levels = max(num_levels, length(Tree(i).me) - 1);
+end
+node_level_counts = zeros(1,num_levels);
+node_level_edges = 1:num_levels;
 
 % collects statistics for updating the tree
-B_up = zeros(tot_tops,Voc);
-weight_up = zeros(tot_tops,1);
+B_up = zeros(num_topics,Voc);
+weight_up = zeros(num_topics,1);
 
 gamma1 = 5; % top-level DP concentration
 gamma2 = 1; % second-level DP concentration
@@ -26,10 +31,10 @@ gamma4 = 2*(2/3); %
 % put info from Tree struct into matrix and vector form
 [ElnB,ElnPtop,id_parent,id_me] = func_process_tree(Tree,beta0,gamma1);
 
-% Family tree indicator matrix. Tree_mat(j,i) = 1 indicates that node j is 
+% Family tree indicator matrix. Tree_mat(j,i) = 1 indicates that node j is
 % along the path from node i to the root node
-Tree_mat = zeros(tot_tops);
-for i = 1:tot_tops
+Tree_mat = zeros(num_topics);
+for i = 1:num_topics
     bool = 1;
     idx = i;
     while bool
@@ -38,7 +43,7 @@ for i = 1:tot_tops
             Tree_mat(idx,i) = 1;
         else
             bool = 0;
-        end        
+        end
     end
 end
 level_penalty = psi(gamma3) - psi(gamma3+gamma4) + sum(Tree_mat,1)'*(psi(gamma4) - psi(gamma3+gamma4));
@@ -52,14 +57,14 @@ for d = 1:D
     ElnB_d = ElnB(:,X_d_ids);                                            % pick out words in document for penalty
     ElnV = psi(1) - psi(1+gamma2);
     Eln1_V = psi(gamma2) - psi(1+gamma2);
-    ElnP_d = zeros(tot_tops,1) - inf;                                   % -inf removes non-activated topics by giving them zero probability
+    ElnP_d = zeros(num_topics,1) - inf;                                   % -inf removes non-activated topics by giving them zero probability
     ElnP_d(id_parent==log(2)) = ElnV+psi(gamma3)-psi(gamma3+gamma4);    % activate first level of topics
 
   % select subtree
     bool = 1;
     idx_pick = [];
     Lbound = [];
-    vec_DPweights = zeros(tot_tops,1);                                  % ElnP_d minus the level penalty
+    vec_DPweights = zeros(num_topics,1);                                  % ElnP_d minus the level penalty
     while bool
         idx_active = find(ElnP_d > -inf);                                             % index of active (selected and potential) nodes
         penalty = ElnB_d(idx_active,:) + repmat(ElnP_d(idx_active),1,length(X_d_ids));
@@ -72,7 +77,7 @@ for d = 1:D
             idx_pick = idx_active(idx_this);                                          % index of selected nodes
             Lbound(end+1) = temp - ElnPtop_act(idx_this);
         else
-            temp = zeros(tot_tops,1); 
+            temp = zeros(num_topics,1);
             temp(idx_active) = (1:length(idx_active))';
             idx_clps = temp(idx_pick);                                                % index of selected nodes within active nodes
             num_act = length(idx_active);
@@ -85,7 +90,7 @@ for d = 1:D
             vec = sum(C_act(idx_clps,:).*log(eps+C_act(idx_clps,:)),1);
             H = log(denominator) - (C_act.*log(C_act+eps) + repmat(vec,num_act,1))./denominator;
             score = sum(numerator./denominator,2) + ElnPtop_act + H*X_d_vals';
-            score(idx_clps) = -inf;          
+            score(idx_clps) = -inf;
             [temp,idx_this] = max(score);
             idx_pick(end+1) = idx_active(idx_this);
             Lbound(end+1) = temp - ElnPtop_act(idx_this);
@@ -113,10 +118,10 @@ for d = 1:D
                 bool = 0;
             end
         end
-        hist_levels(length(Tree(idx_pick(end)).me)-1) = hist_levels(length(Tree(idx_pick(end)).me)-1) + 1;
+        node_level_counts(length(Tree(idx_pick(end)).me)-1) = node_level_counts(length(Tree(idx_pick(end)).me)-1) + 1;
 %         plot(Lbound); title(num2str(length(Tree(idx_pick(end)).me))); pause(.1);
     end
-    size_subtree(d) = length(idx_pick);
+    subtree_sizes(d) = length(idx_pick);
 
   % learn document parameters for subtree
     T = length(idx_pick);
@@ -142,15 +147,16 @@ for d = 1:D
     B_up(idx_pick,X_d_ids) = B_up(idx_pick,X_d_ids) + C_d.*repmat(X_d_vals,length(idx_pick),1);
     weight_up(idx_pick) = weight_up(idx_pick) + 1;
 end
-%rho
-%sum(B_up,2)
-%normalized_hist_levels = hist_levels/D;
-%normalized_hist_levels
-disp('subtree size distribution:')
-ascii_plot_histogram(size_subtree);
+B_up_sums = sum(B_up,2);
+disp('B_update sum distribution:');
+ascii_plot_histogram(B_up_sums);
+disp('subtree size distribution:');
+ascii_plot_histogram(subtree_sizes);
+disp('node level distribution:');
+ascii_plot_bar(node_level_counts, node_level_edges);
 
 % update tree
-for i = 1:tot_tops
+for i = 1:num_topics
     if rho == 1
         Tree(i).beta_cnt = scale*B_up(i,:)/D;
     else

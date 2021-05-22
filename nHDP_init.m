@@ -15,7 +15,7 @@ C(1,:) = 1;
 Tree = [];
 
 for l = 1:L
-    fprintf('beginning initialization step %d/%d\n', l, L);
+    fprintf('beginning initialization step %d/%d...\n', l, L);
     K = num_topics(l);
     vec = godel(1:l)*C(1:l,:);
     S = unique(vec);
@@ -37,7 +37,7 @@ for l = 1:L
             X(X(:,idx(i))<0,idx(i)) = 0;
             X(:,idx(i)) = X(:,idx(i))/sum(X(:,idx(i)));
         end
-    end 
+    end
 end
 
 % K-Means algorithm with L1 assignment and L2 mean minimization

@@ -26,7 +26,7 @@ for i = 1:size(M,1)
     cnt_top(i) = Tree(i).cnt;
 end
 
-% Family tree indicator matrix. Tree_mat(j,i) = 1 indicates that node j is 
+% Family tree indicator matrix. Tree_mat(j,i) = 1 indicates that node j is
 % along the path from node i to the root node
 Tree_mat = zeros(tot_tops);
 for i = 1:tot_tops
@@ -38,7 +38,7 @@ for i = 1:tot_tops
             Tree_mat(idx,i) = 1;
         else
             bool = 0;
-        end        
+        end
     end
 end
 level_penalty = psi(gamma3) - psi(gamma3+gamma4) + sum(Tree_mat,1)'*(psi(gamma4) - psi(gamma3+gamma4));
@@ -81,7 +81,7 @@ for d = 1:D
 %             idx_pick = idx_active(idx_this);                                          % index of selected nodes
 %             Lbound(end+1) = temp - ElnPtop_act(idx_this);
 %         else
-%             temp = zeros(tot_tops,1); 
+%             temp = zeros(tot_tops,1);
 %             temp(idx_active) = (1:length(idx_active))';
 %             idx_clps = temp(idx_pick);                                                % index of selected nodes within active nodes
 %             num_act = length(idx_active);
@@ -94,7 +94,7 @@ for d = 1:D
 %             vec = sum(C_act(idx_clps,:).*log(eps+C_act(idx_clps,:)),1);
 %             H = log(denominator) - (C_act.*log(C_act+eps) + repmat(vec,num_act,1))./denominator;
 %             score = sum(numerator./denominator,2) + ElnPtop_act + H*X_d_vals';
-%             score(idx_clps) = -inf;          
+%             score(idx_clps) = -inf;
 %             [temp,idx_this] = max(score);
 %             idx_pick(end+1) = idx_active(idx_this);
 %             Lbound(end+1) = temp - ElnPtop_act(idx_this);
@@ -125,7 +125,7 @@ for d = 1:D
 %     end
 
 idx_pick = 1:tot_tops;
-    
+
   % learn document parameters for subtree
     T = length(idx_pick);
     ElnB_d = ElnB(idx_pick,X_d_ids);
@@ -155,7 +155,7 @@ idx_pick = 1:tot_tops;
         for i = 1:length(partition)
             idx = find(id_parent==partition(i));
             t1 = stick_cnt(idx);
-            
+
             ElnP_d(idx) =  psi(t1+cnt_top(idx)/sum(cnt_top(idx))) - psi(1+sum(t1));
         end
         this = ElnP_d + Elnbin1 + Tree_mat'*(Elnbin0 + ElnP_d);
@@ -169,10 +169,10 @@ idx_pick = 1:tot_tops;
         cnt_old = cnt;
     end
 
-    
+
     Tree_this = Tree_mat(idx_pick,idx_pick);
     id_par_this = id_parent(idx_pick);
-    
+
     bin_cnt1 = cnt;
     bin_cnt0 = Tree_this*cnt;
 %     idx = find(bin_cnt0<.01);
@@ -182,7 +182,7 @@ idx_pick = 1:tot_tops;
 %     Ebin0(idx) = eps;
     Elnbin1 = log(Ebin1);
     Elnbin0 = log(Ebin0);
-    
+
     stick_cnt = bin_cnt1+bin_cnt0;
     partition = unique(id_par_this);
     for i = 1:length(partition)
@@ -199,7 +199,7 @@ idx_pick = 1:tot_tops;
     vec = P_d'*M(idx_pick,X_test_d_ids);
     llik_mean = llik_mean + log(vec)*X_test_d_vals';
     numtest = numtest + sum(X_test_d_vals);
-%     disp([num2str(d) ' : ' num2str(sum(llik_mean)/(numtest))]); 
+%     disp([num2str(d) ' : ' num2str(sum(llik_mean)/(numtest))]);
 
 %     if mod(d,1000) == 0
 %         disp(num2str(llik_mean/N));

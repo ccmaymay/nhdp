@@ -30,6 +30,3 @@ for g = 1:length(groups)
     vec = ElnV + [0 ; cumsum(Eln1_V(1:end-1))];
     ElnPtop(group_idx(sort_group_idx)) = vec;
 end
-    
-    
-    
