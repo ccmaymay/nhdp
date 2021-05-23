@@ -41,19 +41,40 @@ def load_tree(tree_csv_path):
     return nodes[root_loc]
 
 
-def print_tree(tree_csv_path, vocab_path, num_words=10):
+def print_tree(tree_csv_path, vocab_path, num_words=10, interactive=False):
     tree = load_tree(tree_csv_path)
     vocab = load_vocab(vocab_path)
+    ignore_words = set()
 
-    node_stack = [tree]
-    while node_stack:
-        node = node_stack.pop()
+    while True:
+        node_stack = [tree]
+        while node_stack:
+            node = node_stack.pop()
 
-        top_word_pairs = nlargest(num_words, zip(node.get('beta_cnt', []), vocab))
-        print(node['me'], 10 * ' ', ' '.join(word for (_, word) in top_word_pairs))
+            top_words = [
+                word
+                for (_, word)
+                in nlargest(
+                    num_words,
+                    [
+                        (weight, word)
+                        for (weight, word)
+                        in zip(node.get('beta_cnt', []), vocab)
+                        if word not in ignore_words
+                    ]
+                )
+            ]
+            print(node['me'], 10 * ' ', ' '.join(top_words))
+            print()
 
-        for child in reversed(node['children']):
-            node_stack.append(child)
+            for child in reversed(node['children']):
+                node_stack.append(child)
+
+        if interactive:
+            answer = input('Ignore more words? ' if ignore_words else 'Ignore words? ')
+            ignore_words.update(answer.strip().split())
+        else:
+            break
 
 
 def main():
@@ -61,9 +82,11 @@ def main():
     parser = ArgumentParser(description='Load tree from CSV file and print topics.')
     parser.add_argument('tree_csv_path')
     parser.add_argument('vocab_path')
-    parser.add_argument('--num-words', type=int, default=10)
+    parser.add_argument('--num-words', '-n', type=int, default=10)
+    parser.add_argument('--interactive', '-i', action='store_true')
     args = parser.parse_args()
-    print_tree(args.tree_csv_path, args.vocab_path, args.num_words)
+    print_tree(args.tree_csv_path, args.vocab_path,
+               num_words=args.num_words, interactive=args.interactive)
 
 
 if __name__ == '__main__':
