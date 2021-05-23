@@ -2,7 +2,7 @@ function [Tree] = nHDP_train(X, num_topics, scale, init_size, batch_size, ...
     num_iters, beta0, rho_exp)
 
 if ischar(X)
-    fprintf('loading data from file (%s)...\n', X);
+    fprintf('loading data from file %s...\n', X);
     X = dlmread(X);
 end
 
