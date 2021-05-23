@@ -126,7 +126,7 @@ for d = 1:D
   % learn document parameters for subtree
     T = length(idx_pick);
     ElnB_d = ElnB(idx_pick,X_d_ids);
-    ElnP_d = 0*ElnP_d(idx_pick) - 1;
+    ElnP_d = 0*ElnP_d(idx_pick) - 1; % TODO what?
     cnt_old = zeros(length(idx_pick),1);
     bool_this = 1;
     num = 0;
