@@ -148,7 +148,7 @@ for d = 1:D
     weight_up(idx_pick) = weight_up(idx_pick) + 1;
 end
 B_up_sums = sum(B_up,2);
-disp('B_update sum distribution:');
+disp('topic expected word count distribution:');
 ascii_plot_histogram(B_up_sums);
 disp('subtree size distribution:');
 ascii_plot_histogram(subtree_sizes);
@@ -157,13 +157,15 @@ ascii_plot_bar(node_level_counts, node_level_edges);
 
 % update tree
 for i = 1:num_topics
+    % B_up: lambda
+    % weight_up: tau
+    % TODO should scale be corpus size?
+    scaled_B_up = scale*B_up(i,:)/D;
     if rho == 1
-        Tree(i).beta_cnt = scale*B_up(i,:)/D;
+        Tree(i).beta_cnt = scaled_B_up
     else
-        vec = ones(1,size(B_up,2));
-        vec = vec/sum(vec);
-        vec = sum(B_up(i,:))*vec;
-        Tree(i).beta_cnt = (1-rho)*Tree(i).beta_cnt + rho*((1-rho/10)*scale*B_up(i,:)/D + (rho/10)*scale*vec/D);
+        Tree(i).beta_cnt = (1-rho)*Tree(i).beta_cnt + rho*( ...
+            (1-rho/10)*scaled_B_up + (rho/10)*mean(scaled_B_up)); % smoothing?
     end
     Tree(i).cnt = (1-rho)*Tree(i).cnt + rho*scale*weight_up(i)/D;
 end
