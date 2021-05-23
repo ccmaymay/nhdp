@@ -51,8 +51,8 @@ level_penalty = psi(gamma3) - psi(gamma3+gamma4) + sum(Tree_mat,1)'*(psi(gamma4)
 % main loop
 for d = 1:D
     X_d = X(d,:);
-    X_d_ids = find(X_d)';
-    X_d_vals = nonzeros(X_d)';
+    X_d_ids = reshape(find(X_d),1,[]);
+    X_d_vals = reshape(nonzeros(X_d),1,[]);
 
     ElnB_d = ElnB(:,X_d_ids);                                            % pick out words in document for penalty
     ElnV = psi(1) - psi(1+gamma2);

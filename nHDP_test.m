@@ -50,12 +50,12 @@ all_weights = zeros(tot_tops,1);
 % main loop
 for d = 1:D
     X_d = X(d,:);
-    X_d_ids = find(X_d)';
-    X_d_vals = nonzeros(X_d)';
+    X_d_ids = reshape(find(X_d),1,[]);
+    X_d_vals = reshape(nonzeros(X_d),1,[]);
 
     X_test_d = X_test(d,:);
-    X_test_d_ids = find(X_test_d)';
-    X_test_d_vals = nonzeros(X_test_d)';
+    X_test_d_ids = reshape(find(X_test_d),1,[]);
+    X_test_d_vals = reshape(nonzeros(X_test_d),1,[]);
 
     N = N + sum(X_test_d_vals);
     ElnB_d = ElnB(:,X_d_ids);                                            % pick out words in document for penalty
