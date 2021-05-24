@@ -12,7 +12,7 @@ end
 
 word_counts = full(sum(X,1));
 disp('word count distribution (log scale):');
-ascii_plot_histogram(word_counts, 80, 1);
+ascii_plot_histogram(word_counts, 1);
 
 sorted_word_counts = sort(word_counts,'descend');
 sorted_word_counts = sorted_word_counts(sorted_word_counts > 5);
@@ -32,4 +32,4 @@ end
 fprintf('linear approximation using power law on word counts (k = %.3g, R^2 = %.3g):\n', best_k, best_rsquared);
 x = sorted_word_counts.^(-1/best_k);
 x_sub = x(round(linspace(1,length(x),30)));
-ascii_plot_bar(x_sub, 1:length(x_sub), 80);
+ascii_plot_bar(x_sub, 1:length(x_sub));

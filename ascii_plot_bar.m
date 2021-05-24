@@ -1,16 +1,4 @@
-function ascii_plot_bar(x_heights, x_edges, graph_width, log_scale)
-
-if ~exist('edge_format', 'var')
-    if all(is_int_val(x_edges))
-        max_digit_length = 1;
-        for i=1:length(x_edges)
-            max_digit_length = max(max_digit_length, length(sprintf('%d', x_edges(i))));
-        end
-        edge_format = sprintf('%%%dd', max_digit_length);
-    else
-        edge_format = '%7.2g';
-    end
-end
+function ascii_plot_bar(x_heights, x_edges, log_scale, graph_width)
 
 if ~exist('graph_width', 'var')
     graph_width = 50;
@@ -18,6 +6,16 @@ end
 
 if ~exist('log_scale', 'var')
     log_scale = 0;
+end
+
+if all(is_int_val(x_edges))
+    max_digit_length = 1;
+    for i=1:length(x_edges)
+        max_digit_length = max(max_digit_length, length(sprintf('%d', x_edges(i))));
+    end
+    edge_format = sprintf('%%%dd', max_digit_length);
+else
+    edge_format = '%7.2g';
 end
 
 fprintf('  total: %d\n', sum(x_heights));
