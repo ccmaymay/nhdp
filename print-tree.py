@@ -65,7 +65,6 @@ def print_tree(tree_csv_path, vocab_path, num_words=10, interactive=False):
                 )
             ]
             print(node['me'], 10 * ' ', ' '.join(top_words))
-            print()
 
             for child in reversed(node['children']):
                 node_stack.append(child)
