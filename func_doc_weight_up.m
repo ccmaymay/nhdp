@@ -1,4 +1,4 @@
-function ElnP_d = func_doc_weight_up(cnt,id_parent,gamma2,gamma3,gamma4,Tree_mat)
+function ElnP_d = func_doc_weight_up(cnt,id_parent,model_params,Tree_mat)
 % update expected log probability of each topic selected for this document
 
 T = length(cnt);
@@ -6,8 +6,8 @@ ElnP_d = zeros(T,1);
 
 bin_cnt1 = cnt; % suff stats (nu sums) per topic
 bin_cnt0 = Tree_mat*cnt; % suff stats (nu sums) of children of each topic
-Elnbin1 = psi(bin_cnt1+gamma3) - psi(bin_cnt1+bin_cnt0+gamma3+gamma4); % Elogpi components for U
-Elnbin0 = psi(bin_cnt0+gamma4) - psi(bin_cnt1+bin_cnt0+gamma3+gamma4); % Elogpi components for 1-U
+Elnbin1 = psi(bin_cnt1+model_params.gamma1) - psi(bin_cnt1+bin_cnt0+model_params.gamma1+model_params.gamma2); % Elogpi components for U
+Elnbin0 = psi(bin_cnt0+model_params.gamma2) - psi(bin_cnt1+bin_cnt0+model_params.gamma1+model_params.gamma2); % Elogpi components for 1-U
 
 % % don't re-order weights
 % stick_cnt = bin_cnt1+bin_cnt0;
@@ -18,12 +18,12 @@ Elnbin0 = psi(bin_cnt0+gamma4) - psi(bin_cnt1+bin_cnt0+gamma3+gamma4); % Elogpi 
 %     t3 = rev_cumsum(t1);
 %     if length(t3) > 1
 %         t4 = [t3(2:end) ; 0];
-%         t5 = [0 ; psi(t4(1:end-1)+gamma2) - psi(t1(1:end-1)+t4(1:end-1)+1+gamma2)];
+%         t5 = [0 ; psi(t4(1:end-1)+model_params.beta) - psi(t1(1:end-1)+t4(1:end-1)+1+model_params.beta)];
 %     else
 %         t4 = 0;
 %         t5 = 0;
 %     end
-%     ElnP_d(idx) =  psi(t1+1) - psi(t1+t4+1+gamma2) + cumsum(t5);
+%     ElnP_d(idx) =  psi(t1+1) - psi(t1+t4+1+model_params.beta) + cumsum(t5);
 % end
 % this = ElnP_d + Elnbin1 + Tree_mat'*(Elnbin0 + ElnP_d);
 % ElnP_d = this;
@@ -39,13 +39,13 @@ for i = 1:length(partition)
     t3 = rev_cumsum(t1); % rev cumsum of sorted children subtree suff stats
     if length(t3) > 1
         t4 = [t3(2:end) ; 0]; % accumulated subtree suff stats of nodes to the right (suff stats for continuing)
-        t5 = [0 ; psi(t4(1:end-1)+gamma2) - psi(t1(1:end-1)+t4(1:end-1)+1+gamma2)]; % Elogpi components for 1-V
+        t5 = [0 ; psi(t4(1:end-1)+model_params.beta) - psi(t1(1:end-1)+t4(1:end-1)+1+model_params.beta)]; % Elogpi components for 1-V
     else
         t4 = 0;
         t5 = 0;
     end
     % Elogpi components for V + accumulated Elogpi components for 1-V
-    weights = psi(t1+1) - psi(t1+t4+1+gamma2) + cumsum(t5);
+    weights = psi(t1+1) - psi(t1+t4+1+model_params.beta) + cumsum(t5);
     % store Elogpi components for V and 1-V, taking the reording into account
     ElnP_d(idx(idx_sort)) = weights;
 end

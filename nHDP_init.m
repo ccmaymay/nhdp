@@ -1,9 +1,9 @@
-function Tree = nHDP_init(X,num_topics,scale)
+function Tree = nHDP_init(X,model_params,alg_params)
 % NHDP_INIT initializes the nHDP algorithm using a tree-structured k-means algorithm.
 %
 % Written by John Paisley, jpaisley@berkeley.edu
 
-L = length(num_topics); % number of levels in tree (depth)
+L = length(model_params.num_topics); % number of levels in tree (depth)
 D = size(X,1); % Dt
 X = full(X)';
 X = X ./ sum(X,1);
@@ -16,7 +16,7 @@ Tree = [];
 
 for l = 1:L % loop over levels
     fprintf('beginning initialization step %d/%d...\n', l, L);
-    K = num_topics(l); % number of topics at this level
+    K = model_params.num_topics(l); % number of topics at this level
     vec = godel(1:l)*C(1:l,:); % compute floating-point ids of topics at this level to documents is assigned
     S = unique(vec); % compute floating-point ids of topics at this level to which at least one doc is assigned
     for s = 1:length(S) % loop over topics used at this level
@@ -24,10 +24,10 @@ for l = 1:L % loop over levels
         X_sub = X(:,idx); % compute subset of documents assigned here
         [B,c] = K_means_L1(X_sub,K,num_ite);
         C(l+1,idx) = c; % update assignments table, assigning current documents to children of s
-        cnt = histc(c,1:num_topics(l)); % number of topics assigned to each cluster
+        cnt = histc(c,1:model_params.num_topics(l)); % number of topics assigned to each cluster
         for i = 1:size(B,2) % loop over children
-            Tree(end+1).beta_cnt = scale*B(:,i)'; % 1 x W theta ss
-            Tree(end).cnt = scale*cnt(i)/D; % count of docs in subtree rooted here
+            Tree(end+1).beta_cnt = alg_params.scale*B(:,i)'; % 1 x W theta ss
+            Tree(end).cnt = alg_params.scale*cnt(i)/D; % count of docs in subtree rooted here
             Tree(end).parent = C(1:l,idx(1))'; % vector id of parent
             Tree(end).me = [Tree(end).parent i]; % vector id
         end

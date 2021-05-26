@@ -1,4 +1,4 @@
-function Tree = nHDP_step(X,Tree,scale,rho,beta0)
+function Tree = nHDP_step(X,Tree,model_params,alg_params,rho)
 % NHDP_STEP performs one step of stochastic variational inference
 % for the nested hierarchical Dirichlet process.
 %
@@ -9,36 +9,31 @@ function Tree = nHDP_step(X,Tree,scale,rho,beta0)
 %
 % Written by John Paisley, jpaisley@berkeley.edu
 
-num_topics = length(Tree); % K
+total_num_topics = length(Tree); % K
 [D,Voc] = size(X); % Dt, W
 subtree_sizes = zeros(1,D); % Kt per doc
 num_levels = 0;
-for i = 1:num_topics
+for i = 1:total_num_topics
     num_levels = max(num_levels, length(Tree(i).me) - 1);
 end
 node_level_counts = zeros(1,num_levels);
 node_level_edges = 1:num_levels;
 
 % batch suff stats
-B_up = zeros(num_topics,Voc); % suff stats for theta (K x W)
-weight_up = zeros(num_topics,1); % suff stats for V (K x 1)
-
-gamma1 = 5; % top-level DP concentration
-gamma2 = 1; % second-level DP concentration
-gamma3 = 2*(1/3); % beta stopping switches
-gamma4 = 2*(2/3);
+B_up = zeros(total_num_topics,Voc); % suff stats for theta (K x W)
+weight_up = zeros(total_num_topics,1); % suff stats for V (K x 1)
 
 % put info from Tree struct into matrix and vector form
 % ElnB: Elogtheta (K x W)
 % ElnPtop: Elogp (with implicit reordering of nodes) (1 x K)
 % id_parent: floating-point ids of node parents
 % id_me: floating-point ids of nodes
-[ElnB,ElnPtop,id_parent,id_me] = func_process_tree(Tree,beta0,gamma1);
+[ElnB,ElnPtop,id_parent,id_me] = func_process_tree(Tree,model_params);
 
 % Family tree indicator matrix. Tree_mat(j,i) = 1 indicates that node j is
 % along the path from node i to the root node (not including node i or root)
-Tree_mat = zeros(num_topics);
-for i = 1:num_topics
+Tree_mat = zeros(total_num_topics);
+for i = 1:total_num_topics
     bool = 1;
     idx = i;
     % iteratively climb up tree until we hit root
@@ -55,7 +50,7 @@ for i = 1:num_topics
 end
 
 % ELBO terms for U (Elogpi prior for just level penalty)
-level_penalty = psi(gamma3) - psi(gamma3+gamma4) + sum(Tree_mat,1)'*(psi(gamma4) - psi(gamma3+gamma4));
+level_penalty = psi(model_params.gamma1) - psi(model_params.gamma1+model_params.gamma2) + sum(Tree_mat,1)'*(psi(model_params.gamma2) - psi(model_params.gamma1+model_params.gamma2));
 
 % E-step
 for d = 1:D
@@ -64,16 +59,16 @@ for d = 1:D
     X_d_vals = reshape(nonzeros(X_d),1,[]);
 
     ElnB_d = ElnB(:,X_d_ids); % doc-wise Elogtheta (K x Wd)
-    ElnV = psi(1) - psi(1+gamma2); % local ElogV prior
-    Eln1_V = psi(gamma2) - psi(1+gamma2); % local Elog(1-V) prior
-    ElnP_d = zeros(num_topics,1) - inf; % Elogpi prior (initially all nodes inactive...) (K x 1)
-    ElnP_d(id_parent==log(2)) = ElnV+psi(gamma3)-psi(gamma3+gamma4); % activate children of root
+    ElnV = psi(1) - psi(1+model_params.beta); % local ElogV prior
+    Eln1_V = psi(model_params.beta) - psi(1+model_params.beta); % local Elog(1-V) prior
+    ElnP_d = zeros(total_num_topics,1) - inf; % Elogpi prior (initially all nodes inactive...) (K x 1)
+    ElnP_d(id_parent==log(2)) = ElnV+psi(model_params.gamma1)-psi(model_params.gamma1+model_params.gamma2); % activate children of root
 
     % select subtree
     bool = 1;
     idx_pick = []; % global indices of selected nodes
     Lbound = []; % scores (topic assignment and word observation ELBO components) of the subtrees corresponding to successively selected nodes
-    vec_DPweights = zeros(num_topics,1); % ElnP_d minus the level penalty---that is, Elogpi prior for just the current level's local V terms (K x 1)
+    vec_DPweights = zeros(total_num_topics,1); % ElnP_d minus the level penalty---that is, Elogpi prior for just the current level's local V terms (K x 1)
     while bool
         idx_active = find(ElnP_d > -inf); % indices of active (selected and potential) nodes
         penalty = ElnB_d(idx_active,:) + repmat(ElnP_d(idx_active),1,length(X_d_ids)); % Elogtheta + Elogpi for active nodes (Ka x Wd)
@@ -89,7 +84,7 @@ for d = 1:D
         else
             % selecting subsequent node, some active nodes are already selected
 
-            temp = zeros(num_topics,1); % indices of active nodes (K x 1)
+            temp = zeros(total_num_topics,1); % indices of active nodes (K x 1)
             temp(idx_active) = (1:length(idx_active))';
             idx_clps = temp(idx_pick); % indices of selected nodes
             num_act = length(idx_active); % number of active nodes
@@ -173,7 +168,7 @@ for d = 1:D
         % store nu sums (one per topic) in cnt
         cnt = C_d*X_d_vals';
         % estimate Elogpi
-        ElnP_d = func_doc_weight_up(cnt,id_parent(idx_pick),gamma2,gamma3,gamma4,Tree_mat(idx_pick,idx_pick));
+        ElnP_d = func_doc_weight_up(cnt,id_parent(idx_pick),model_params,Tree_mat(idx_pick,idx_pick));
         % stop if rel change in nu sums is less than 1e-3 or 50 iters elapsed
         if sum(abs(cnt-cnt_old))/sum(cnt) < 10^-3 || num == 50
             bool_this = 0;
@@ -197,11 +192,11 @@ ascii_plot_bar(node_level_counts, node_level_edges);
 % M-step
 % note scale here is as used in init, e.g. 100D/K... (?!)
 % and note the D variable below is the *batch* size
-for i = 1:num_topics
+for i = 1:total_num_topics
     % B_up: lambda
     % weight_up: tau
     % TODO should scale be corpus size?
-    scaled_B_up = scale*B_up(i,:)/D;
+    scaled_B_up = alg_params.scale*B_up(i,:)/D;
     if rho == 1
         Tree(i).beta_cnt = scaled_B_up
     else
@@ -210,5 +205,5 @@ for i = 1:num_topics
         Tree(i).beta_cnt = (1-rho)*Tree(i).beta_cnt + rho*( ...
             (1-rho/10)*scaled_B_up + (rho/10)*mean(scaled_B_up));
     end
-    Tree(i).cnt = (1-rho)*Tree(i).cnt + rho*scale*weight_up(i)/D;
+    Tree(i).cnt = (1-rho)*Tree(i).cnt + rho*alg_params.scale*weight_up(i)/D;
 end
