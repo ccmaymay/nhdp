@@ -11,6 +11,7 @@ arguments
     options.start_tree (1,:) = []
     options.beta0 (1,1) {mustBePositive} = 0.1
     options.rho_exp (1,1) {mustBePositive} = 0.75
+    options.rho_base_offset (1,1) {mustBePositive} = 1
     options.save_interval (1,1) {mustBeInteger,mustBeNonnegative} = 0
     options.save_path (1,:) {mustBeTextScalar} = 'nhdp.mat'
 end
@@ -44,7 +45,7 @@ disp('estimating topics with variational inference...');
 for i = options.start_iter:options.num_iters
     fprintf('beginning variational inference iteration %d/%d...\n', i, options.num_iters);
     [~,b] = sort(rand(1,D));
-    rho = (1+i)^-options.rho_exp; % step size can also be played with
+    rho = (options.rho_base_offset+i)^-options.rho_exp; % step size can also be played with
     Tree = nHDP_step(X(b(1:options.batch_size),:),Tree,options.scale,rho,options.beta0);
     if options.save_interval > 0 && mod(i, options.save_interval) == 0
         fprintf('saving tree to %s...\n', options.save_path);
