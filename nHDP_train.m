@@ -6,8 +6,8 @@ arguments
     model_params.lambda0 (1,1) {mustBePositive} = 0.1 % topic Dirichlet hyperparameter
     model_params.alpha (1,1) {mustBePositive} = 5 % top-level (global) DP concentration
     model_params.beta (1,1) {mustBePositive} = 1 % second-level (local) DP concentration
-    model_params.gamma1 (1,1) {mustBePositive} = 2*(1/3) % switching DP stopping hyperparameter
-    model_params.gamma2 (1,1) {mustBePositive} = 2*(2/3) % switching DP continuing hyperparameter
+    model_params.gamma1 (1,1) {mustBePositive} = 1/3 % switching DP stopping hyperparameter
+    model_params.gamma2 (1,1) {mustBePositive} = 2/3 % switching DP continuing hyperparameter
     alg_params.init_size (1,1) {mustBeInteger,mustBeNonnegative} = 2000
     alg_params.batch_size (1,1) {mustBeInteger,mustBePositive} = 2000
     alg_params.num_iters (1,1) {mustBeInteger,mustBePositive} = 1000
@@ -22,6 +22,8 @@ arguments
     alg_params.batch_scale (1,1) {mustBeNonnegative} = 0
     alg_params.init_num_iters (1,1) {mustBeInteger,mustBePositive} = 3
     alg_params.init_rand_scale (1,1) {mustBeNonnegative} = 100
+    alg_params.subtree_sel_threshold (1,1) {mustBePositive} = 10^-3
+    alg_params.local_update_threshold (1,1) {mustBePositive} = 10^-2
 end
 
 alg_params.init_size = min(size(X, 1), alg_params.init_size);

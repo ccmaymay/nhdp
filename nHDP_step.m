@@ -140,9 +140,9 @@ for d = 1:actual_batch_size
             end
         end
 
-        % stop if relative change in ELBO is less than 1e-3 or subtree has 20 nodes
+        % stop if relative change in ELBO is less than 1e-3
         if length(Lbound) > 1
-            if abs(Lbound(end)-Lbound(end-1))/abs(Lbound(end-1)) < 10^-3 || length(Lbound) == 20
+            if abs(Lbound(end)-Lbound(end-1))/abs(Lbound(end-1)) < alg_params.subtree_sel_threshold %|| length(Lbound) == 20
                 bool = 0;
             end
         end
@@ -154,30 +154,28 @@ for d = 1:actual_batch_size
     % learn document parameters for subtree
     T = length(idx_pick); % again, size of subtree
     ElnB_d = ElnB(idx_pick,X_d_ids); % Elogtheta for given subtree, words
-    ElnP_d = 0*ElnP_d(idx_pick) - 1; % Elogpi for given subtree... ignored for first iteration (TODO)
+    ElnP_d = ElnP_d(idx_pick); % Elogpi for given subtree
     tau_sums_old = zeros(length(idx_pick),1);
     bool_this = 1;
-    num = 0;
     while bool_this
-        num = num+1;
         % estimate nu
         C_d = ElnB_d + repmat(ElnP_d,1,length(X_d_ids));
-        C_d = C_d - repmat(max(C_d,[],1),T,1);
-        C_d = exp(C_d);
-        C_d = C_d./repmat(sum(C_d,1),T,1);
+        C_d = exp(C_d - max(C_d,[],1));
+        C_d = C_d./sum(C_d,1);
         % store nu sums (one per topic) in tau_sums
-        tau_sums = C_d*X_d_vals';
+        scaled_nu = C_d.*X_d_vals;
+        tau_sums = sum(scaled_nu,2);
         % estimate Elogpi
         ElnP_d = func_doc_weight_up(tau_sums,id_parent(idx_pick),model_params,Tree_mat(idx_pick,idx_pick));
-        % stop if rel change in nu sums is less than 1e-3 or 50 iters elapsed
-        if sum(abs(tau_sums-tau_sums_old))/sum(tau_sums) < 10^-3 || num == 50
+        % stop if rel change in nu sums is less than 1e-3
+        if sum(abs(tau_sums-tau_sums_old))/sum(tau_sums) < alg_params.local_update_threshold %|| num == 50
             bool_this = 0;
         end
         tau_sums_old = tau_sums;
 %         stem(tau_sums); title(num2str(num)); pause(.1);
     end
     % update batch theta ss
-    B_up(idx_pick,X_d_ids) = B_up(idx_pick,X_d_ids) + C_d.*repmat(X_d_vals,length(idx_pick),1);
+    B_up(idx_pick,X_d_ids) = B_up(idx_pick,X_d_ids) + scaled_nu;
     % update batch V ss
     weight_up(idx_pick) = weight_up(idx_pick) + 1;
 end
