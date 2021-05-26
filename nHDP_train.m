@@ -1,7 +1,7 @@
 function [Tree] = nHDP_train(X, model_params, alg_params)
 
 arguments
-    X (:,:) {mustBeInteger,mustBeNonnegative}
+    X (:,:)
     model_params.num_topics (1,:) {mustBeInteger} = [20 10 5]
     model_params.lambda0 (1,1) {mustBePositive} = 0.1 % topic Dirichlet hyperparameter
     model_params.alpha (1,1) {mustBePositive} = 5 % top-level (global) DP concentration
