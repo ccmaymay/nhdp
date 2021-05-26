@@ -48,9 +48,14 @@ for i = options.start_iter:options.num_iters
     rho = (options.rho_base_offset+i)^-options.rho_exp; % step size can also be played with
     Tree = nHDP_step(X(b(1:options.batch_size),:),Tree,options.scale,rho,options.beta0);
     if options.save_interval > 0 && mod(i, options.save_interval) == 0
-        fprintf('saving tree to %s...\n', options.save_path);
         temp_save_path = [options.save_path, '.', sprintf('%d', randi([0 9], 1, 10))];
-        save(temp_save_path, 'Tree');
+        if endsWith(options.save_path, '.csv', 'IgnoreCase', true)
+            fprintf('saving tree to CSV file %s...\n', options.save_path);
+            write_tree_csv(Tree, temp_save_path);
+        else
+            fprintf('saving tree to MAT file %s...\n', options.save_path);
+            save(temp_save_path, 'Tree');
+        end
         movefile(temp_save_path, options.save_path);
     end
 end
