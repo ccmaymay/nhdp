@@ -4,26 +4,26 @@ function [ElnB,ElnPtop,id_parent,id_me] = func_process_tree(Tree,model_params)
 
 godel = log([2 3 5 7 11 13 17 19 23 29 31 37 41 43 47]);
 
-Voc = length(Tree(1).beta_cnt);
+Voc = length(Tree(1).lambda_sums);
 total_num_topics = length(Tree);
 
-id_parent = zeros(total_num_topics,1); % floating point ids of parents (K x 1)
-id_me = zeros(total_num_topics,1); % floating point ids of topics (K x 1)
+id_parent = zeros(total_num_topics,1); % real ids of parents (K x 1)
+id_me = zeros(total_num_topics,1); % real ids of topics (K x 1)
 ElnB = zeros(total_num_topics,Voc); % Elogtheta (K x W)
 count = zeros(total_num_topics,1); % count of docs in subtrees routed at these nodes (K x 1)
 for i = 1:length(Tree)
-    % unique floating-point id of parent of node i
+    % unique real id of parent of node i
     id_parent(i) = Tree(i).parent*godel(1:length(Tree(i).parent))';
-    % unique floating-point id of node i
+    % unique real id of node i
     id_me(i) = Tree(i).me*godel(1:length(Tree(i).me))';
     % fill in row of Elogtheta
-    ElnB(i,:) = psi(Tree(i).beta_cnt + model_params.lambda0) - psi(sum(Tree(i).beta_cnt + model_params.lambda0));
+    ElnB(i,:) = psi(Tree(i).lambda_sums + model_params.lambda0) - psi(sum(Tree(i).lambda_sums + model_params.lambda0));
     % fill in element of doc assignment counts
-    count(i) = Tree(i).cnt;
+    count(i) = Tree(i).tau_sums;
 end
 
 ElnPtop = zeros(total_num_topics,1); % Elogp (global Elogpi) (K x 1)
-groups = unique(id_parent); % set of floating-point parent ids
+groups = unique(id_parent); % set of real parent ids
 for g = 1:length(groups)
     % find integer indices of this node's children
     group_idx = find(id_parent==groups(g));

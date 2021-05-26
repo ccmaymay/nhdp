@@ -17,8 +17,8 @@ def load_tree(tree_csv_path):
             (
                 tuple(int(x) for x in row['me'].strip().split()),
                 dict(parent_loc=tuple(int(x) for x in row['parent'].strip().split()),
-                     cnt=float(row['cnt'].strip()),
-                     beta_cnt=[float(x) for x in row['beta_cnt'].strip().split()],
+                     tau_sums=float(row['tau_sums'].strip()),
+                     lambda_sums=[float(x) for x in row['lambda_sums'].strip().split()],
                      children={})
             )
             for row in csv.DictReader(f)
@@ -59,7 +59,7 @@ def print_tree(tree_csv_path, vocab_path, num_words=10, interactive=False):
                     [
                         (weight, word)
                         for (weight, word)
-                        in zip(node.get('beta_cnt', []), vocab)
+                        in zip(node.get('lambda_sums', []), vocab)
                         if word not in ignore_words
                     ]
                 )

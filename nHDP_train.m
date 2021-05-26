@@ -8,16 +8,20 @@ arguments
     model_params.beta (1,1) {mustBePositive} = 1 % second-level (local) DP concentration
     model_params.gamma1 (1,1) {mustBePositive} = 2*(1/3) % switching DP stopping hyperparameter
     model_params.gamma2 (1,1) {mustBePositive} = 2*(2/3) % switching DP continuing hyperparameter
-    alg_params.scale (1,1) {mustBePositive} = 100000
     alg_params.init_size (1,1) {mustBeInteger,mustBeNonnegative} = 2000
     alg_params.batch_size (1,1) {mustBeInteger,mustBePositive} = 2000
     alg_params.num_iters (1,1) {mustBeInteger,mustBePositive} = 1000
+    alg_params.save_interval (1,1) {mustBeInteger,mustBeNonnegative} = 0
+    alg_params.save_path (1,:) {mustBeTextScalar} = 'nhdp.csv'
     alg_params.start_iter (1,1) {mustBeInteger,mustBePositive} = 1
     alg_params.start_tree (1,:) = []
     alg_params.rho_exp (1,1) {mustBePositive} = 0.75
     alg_params.rho_base_offset (1,1) {mustBePositive} = 1
-    alg_params.save_interval (1,1) {mustBeInteger,mustBeNonnegative} = 0
-    alg_params.save_path (1,:) {mustBeTextScalar} = 'nhdp.csv'
+    alg_params.kappa (1,1) {mustBeNonnegative,mustBeLessThanOrEqual(alg_params.kappa,1)} = 0.5
+    alg_params.init_scale (1,1) {mustBeNonnegative} = 0
+    alg_params.batch_scale (1,1) {mustBeNonnegative} = 0
+    alg_params.init_num_iters (1,1) {mustBeInteger,mustBePositive} = 3
+    alg_params.init_rand_scale (1,1) {mustBeNonnegative} = 100
 end
 
 alg_params.init_size = min(size(X, 1), alg_params.init_size);
@@ -26,18 +30,18 @@ alg_params.batch_size = min(size(X, 1), alg_params.batch_size);
 [D, Voc] = size(X);
 fprintf('corpus has %d documents spanning %d words\n', D, Voc);
 
+if alg_params.init_scale == 0
+    alg_params.init_scale = D;
+end
+
+if alg_params.batch_scale == 0
+    alg_params.batch_scale = D;
+end
+
 if alg_params.init_size > 0
     disp('initializing topics with k-means algorithm...');
     [~,b] = sort(rand(1,D));
     Tree = nHDP_init(X(b(1:alg_params.init_size),:),model_params,alg_params);
-    disp('post-processing initialized topics...');
-    for i = 1:length(Tree)
-        if Tree(i).cnt == 0
-            Tree(i).beta_cnt(:) = 0;
-        end
-        vec = gamrnd(ones(1,length(Tree(i).beta_cnt)),1);
-        Tree(i).beta_cnt = .95*Tree(i).beta_cnt + .05*alg_params.scale*vec/sum(vec);
-    end
 else
     if isempty(alg_params.start_tree)
         error('init_size is 0 but start_tree is not specified');
@@ -57,8 +61,8 @@ for i = alg_params.start_iter:alg_params.num_iters
             fprintf('saving tree to CSV file %s...\n', alg_params.save_path);
             write_tree_csv(Tree, temp_save_path);
         else
-            fprintf('saving tree to MAT file %s...\n', alg_params.save_path);
-            save(temp_save_path, 'Tree');
+            fprintf('saving tree and parameters to MAT file %s...\n', alg_params.save_path);
+            save(temp_save_path, 'Tree', 'model_params', 'alg_params');
         end
         movefile(temp_save_path, alg_params.save_path);
     end

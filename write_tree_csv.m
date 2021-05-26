@@ -2,7 +2,7 @@ function write_tree_csv(Tree, filename)
 
 fh = fopen(filename, 'w');
 
-fprintf(fh, 'me,parent,cnt,beta_cnt\n');
+fprintf(fh, 'me,parent,tau_sums,lambda_sums\n');
 for i=1:length(Tree)
     node = Tree(i);
 
@@ -12,12 +12,12 @@ for i=1:length(Tree)
     parent = sprintf('%d ', node.parent);
     parent = parent(1:end-1);
 
-    cnt = sprintf('%g', node.cnt);
+    tau_sums = sprintf('%g', node.tau_sums);
 
-    beta_cnt = sprintf('%g ', node.beta_cnt);
-    beta_cnt = beta_cnt(1:end-1);
+    lambda_sums = sprintf('%g ', node.lambda_sums);
+    lambda_sums = lambda_sums(1:end-1);
 
-    fprintf(fh, '%s,%s,%s,%s\n', me, parent, cnt, beta_cnt);
+    fprintf(fh, '%s,%s,%s,%s\n', me, parent, tau_sums, lambda_sums);
 end
 
 fclose(fh);

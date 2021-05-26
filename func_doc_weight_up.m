@@ -1,11 +1,11 @@
-function ElnP_d = func_doc_weight_up(cnt,id_parent,model_params,Tree_mat)
+function ElnP_d = func_doc_weight_up(tau_sums,id_parent,model_params,Tree_mat)
 % update expected log probability of each topic selected for this document
 
-T = length(cnt);
+T = length(tau_sums);
 ElnP_d = zeros(T,1);
 
-bin_cnt1 = cnt; % suff stats (nu sums) per topic
-bin_cnt0 = Tree_mat*cnt; % suff stats (nu sums) of children of each topic
+bin_cnt1 = tau_sums; % suff stats (nu sums) per topic
+bin_cnt0 = Tree_mat*tau_sums; % suff stats (nu sums) of children of each topic
 Elnbin1 = psi(bin_cnt1+model_params.gamma1) - psi(bin_cnt1+bin_cnt0+model_params.gamma1+model_params.gamma2); % Elogpi components for U
 Elnbin0 = psi(bin_cnt0+model_params.gamma2) - psi(bin_cnt1+bin_cnt0+model_params.gamma1+model_params.gamma2); % Elogpi components for 1-U
 
@@ -30,7 +30,7 @@ Elnbin0 = psi(bin_cnt0+model_params.gamma2) - psi(bin_cnt1+bin_cnt0+model_params
 
 % re-order weights
 stick_cnt = bin_cnt1+bin_cnt0; % suff stats for subtree rooted at topic
-partition = unique(id_parent); % unique parent node floating-point ids
+partition = unique(id_parent); % unique parent node real ids
 % first we compute level-wise components
 for i = 1:length(partition)
     idx = find(id_parent==partition(i)); % find children of this parent

@@ -10,8 +10,8 @@ function Tree = nHDP_step(X,Tree,model_params,alg_params,rho)
 % Written by John Paisley, jpaisley@berkeley.edu
 
 total_num_topics = length(Tree); % K
-[D,Voc] = size(X); % Dt, W
-subtree_sizes = zeros(1,D); % Kt per doc
+[actual_batch_size,Voc] = size(X); % batch size |Cs|, vocabulary size W
+subtree_sizes = zeros(1,actual_batch_size); % Kt per doc
 num_levels = 0;
 for i = 1:total_num_topics
     num_levels = max(num_levels, length(Tree(i).me) - 1);
@@ -26,8 +26,8 @@ weight_up = zeros(total_num_topics,1); % suff stats for V (K x 1)
 % put info from Tree struct into matrix and vector form
 % ElnB: Elogtheta (K x W)
 % ElnPtop: Elogp (with implicit reordering of nodes) (1 x K)
-% id_parent: floating-point ids of node parents
-% id_me: floating-point ids of nodes
+% id_parent: real ids of node parents
+% id_me: real ids of nodes
 [ElnB,ElnPtop,id_parent,id_me] = func_process_tree(Tree,model_params);
 
 % Family tree indicator matrix. Tree_mat(j,i) = 1 indicates that node j is
@@ -53,7 +53,7 @@ end
 level_penalty = psi(model_params.gamma1) - psi(model_params.gamma1+model_params.gamma2) + sum(Tree_mat,1)'*(psi(model_params.gamma2) - psi(model_params.gamma1+model_params.gamma2));
 
 % E-step
-for d = 1:D
+for d = 1:actual_batch_size
     X_d = X(d,:);
     X_d_ids = reshape(find(X_d),1,[]);
     X_d_vals = reshape(nonzeros(X_d),1,[]);
@@ -155,7 +155,7 @@ for d = 1:D
     T = length(idx_pick); % again, size of subtree
     ElnB_d = ElnB(idx_pick,X_d_ids); % Elogtheta for given subtree, words
     ElnP_d = 0*ElnP_d(idx_pick) - 1; % Elogpi for given subtree... ignored for first iteration (TODO)
-    cnt_old = zeros(length(idx_pick),1);
+    tau_sums_old = zeros(length(idx_pick),1);
     bool_this = 1;
     num = 0;
     while bool_this
@@ -165,16 +165,16 @@ for d = 1:D
         C_d = C_d - repmat(max(C_d,[],1),T,1);
         C_d = exp(C_d);
         C_d = C_d./repmat(sum(C_d,1),T,1);
-        % store nu sums (one per topic) in cnt
-        cnt = C_d*X_d_vals';
+        % store nu sums (one per topic) in tau_sums
+        tau_sums = C_d*X_d_vals';
         % estimate Elogpi
-        ElnP_d = func_doc_weight_up(cnt,id_parent(idx_pick),model_params,Tree_mat(idx_pick,idx_pick));
+        ElnP_d = func_doc_weight_up(tau_sums,id_parent(idx_pick),model_params,Tree_mat(idx_pick,idx_pick));
         % stop if rel change in nu sums is less than 1e-3 or 50 iters elapsed
-        if sum(abs(cnt-cnt_old))/sum(cnt) < 10^-3 || num == 50
+        if sum(abs(tau_sums-tau_sums_old))/sum(tau_sums) < 10^-3 || num == 50
             bool_this = 0;
         end
-        cnt_old = cnt;
-%         stem(cnt); title(num2str(num)); pause(.1);
+        tau_sums_old = tau_sums;
+%         stem(tau_sums); title(num2str(num)); pause(.1);
     end
     % update batch theta ss
     B_up(idx_pick,X_d_ids) = B_up(idx_pick,X_d_ids) + C_d.*repmat(X_d_vals,length(idx_pick),1);
@@ -190,20 +190,17 @@ disp('node level distribution:');
 ascii_plot_bar(node_level_counts, node_level_edges);
 
 % M-step
-% note scale here is as used in init, e.g. 100D/K... (?!)
-% and note the D variable below is the *batch* size
 for i = 1:total_num_topics
     % B_up: lambda
     % weight_up: tau
-    % TODO should scale be corpus size?
-    scaled_B_up = alg_params.scale*B_up(i,:)/D;
+    scaled_B_up = (alg_params.batch_scale/actual_batch_size) * B_up(i,:);
     if rho == 1
-        Tree(i).beta_cnt = scaled_B_up
+        Tree(i).lambda_sums = scaled_B_up
     else
         % set theta ss to (1 - rho) * old + rho * ((1 - rho/10) * new + rho/10 * avg theta ss for this topic)
         % (for smoothing?)
-        Tree(i).beta_cnt = (1-rho)*Tree(i).beta_cnt + rho*( ...
+        Tree(i).lambda_sums = (1-rho)*Tree(i).lambda_sums + rho*( ...
             (1-rho/10)*scaled_B_up + (rho/10)*mean(scaled_B_up));
     end
-    Tree(i).cnt = (1-rho)*Tree(i).cnt + rho*alg_params.scale*weight_up(i)/D;
+    Tree(i).tau_sums = (1-rho)*Tree(i).tau_sums + rho*alg_params.batch_scale*weight_up(i)/actual_batch_size;
 end
