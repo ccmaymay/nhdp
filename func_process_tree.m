@@ -5,12 +5,12 @@ function [ElnB,ElnPtop,id_parent,id_me] = func_process_tree(Tree,beta0,gamma1)
 godel = log([2 3 5 7 11 13 17 19 23 29 31 37 41 43 47]);
 
 Voc = length(Tree(1).beta_cnt);
-tot_tops = length(Tree);
+num_topics = length(Tree);
 
-id_parent = zeros(tot_tops,1); % floating point ids of parents (K x 1)
-id_me = zeros(tot_tops,1); % floating point ids of topics (K x 1)
-ElnB = zeros(tot_tops,Voc); % Elogtheta (K x W)
-count = zeros(tot_tops,1); % count of docs in subtrees routed at these nodes (K x 1)
+id_parent = zeros(num_topics,1); % floating point ids of parents (K x 1)
+id_me = zeros(num_topics,1); % floating point ids of topics (K x 1)
+ElnB = zeros(num_topics,Voc); % Elogtheta (K x W)
+count = zeros(num_topics,1); % count of docs in subtrees routed at these nodes (K x 1)
 for i = 1:length(Tree)
     % unique floating-point id of parent of node i
     id_parent(i) = Tree(i).parent*godel(1:length(Tree(i).parent))';
@@ -22,7 +22,7 @@ for i = 1:length(Tree)
     count(i) = Tree(i).cnt;
 end
 
-ElnPtop = zeros(tot_tops,1); % Elogp (global Elogpi) (K x 1)
+ElnPtop = zeros(num_topics,1); % Elogp (global Elogpi) (K x 1)
 groups = unique(id_parent); % set of floating-point parent ids
 for g = 1:length(groups)
     % find integer indices of this node's children

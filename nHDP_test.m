@@ -4,12 +4,12 @@ function [llik_mean,C_d] = nHDP_test(X_test,X,Tree,beta0)
 
 numtest = 0;
 
-tot_tops = length(Tree);
+num_topics = length(Tree);
 [D,Voc] = size(X);
 
 % collects statistics for updating the tree
-B_up = zeros(tot_tops,Voc);
-weight_up = zeros(tot_tops,1);
+B_up = zeros(num_topics,Voc);
+weight_up = zeros(num_topics,1);
 
 gamma1 = 5; % top-level DP concentration
 gamma2 = 1; % second-level DP concentration
@@ -18,8 +18,8 @@ gamma4 = (2/3); %
 
 % put info from Tree struct into matrix and vector form
 [ElnB,ElnPtop,id_parent,id_me] = func_process_tree(Tree,beta0,gamma1);
-M = zeros(tot_tops,Voc);
-cnt_top = zeros(tot_tops,1);
+M = zeros(num_topics,Voc);
+cnt_top = zeros(num_topics,1);
 for i = 1:size(M,1)
     M(i,:) = Tree(i).beta_cnt + beta0;
     M(i,:) = M(i,:)/sum(M(i,:));
@@ -28,8 +28,8 @@ end
 
 % Family tree indicator matrix. Tree_mat(j,i) = 1 indicates that node j is
 % along the path from node i to the root node
-Tree_mat = zeros(tot_tops);
-for i = 1:tot_tops
+Tree_mat = zeros(num_topics);
+for i = 1:num_topics
     bool = 1;
     idx = i;
     while bool
@@ -46,7 +46,7 @@ level_penalty = psi(gamma3) - psi(gamma3+gamma4) + sum(Tree_mat,1)'*(psi(gamma4)
 llik_mean = 0;
 temp_vec = zeros(1,D);
 N = 0;
-all_weights = zeros(tot_tops,1);
+all_weights = zeros(num_topics,1);
 % main loop
 for d = 1:D
     X_d = X(d,:);
@@ -61,14 +61,14 @@ for d = 1:D
     ElnB_d = ElnB(:,X_d_ids);                                            % pick out words in document for penalty
     ElnV = psi(1) - psi(1+gamma2);
     Eln1_V = psi(gamma2) - psi(1+gamma2);
-    ElnP_d = zeros(tot_tops,1) ; - inf;                                   % -inf removes non-activated topics by giving them zero probability
+    ElnP_d = zeros(num_topics,1) ; - inf;                                   % -inf removes non-activated topics by giving them zero probability
     ElnP_d(id_parent==log(2)) = ElnV+psi(gamma3)-psi(gamma3+gamma4);    % activate first level of topics
 
 %   % select subtree
 %     bool = 1;
 %     idx_pick = [];
 %     Lbound = [];
-%     vec_DPweights = zeros(tot_tops,1);                                  % ElnP_d minus the level penalty
+%     vec_DPweights = zeros(num_topics,1);                                  % ElnP_d minus the level penalty
 %     while bool
 %         idx_active = find(ElnP_d > -inf);                                             % index of active (selected and potential) nodes
 %         penalty = ElnB_d(idx_active,:) + repmat(ElnP_d(idx_active),1,length(X_d_ids));
@@ -81,7 +81,7 @@ for d = 1:D
 %             idx_pick = idx_active(idx_this);                                          % index of selected nodes
 %             Lbound(end+1) = temp - ElnPtop_act(idx_this);
 %         else
-%             temp = zeros(tot_tops,1);
+%             temp = zeros(num_topics,1);
 %             temp(idx_active) = (1:length(idx_active))';
 %             idx_clps = temp(idx_pick);                                                % index of selected nodes within active nodes
 %             num_act = length(idx_active);
@@ -124,7 +124,7 @@ for d = 1:D
 %         end
 %     end
 
-idx_pick = 1:tot_tops;
+idx_pick = 1:num_topics;
 
   % learn document parameters for subtree
     T = length(idx_pick);
