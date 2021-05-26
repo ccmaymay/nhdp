@@ -165,7 +165,6 @@ for d = 1:D
     num = 0;
     while bool_this
         num = num+1;
-<<<<<<< HEAD
         % estimate nu
         C_d = ElnB_d + repmat(ElnP_d,1,length(X_d_ids));
         C_d = C_d - repmat(max(C_d,[],1),T,1);
