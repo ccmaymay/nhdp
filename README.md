@@ -9,7 +9,9 @@ include:
 * Further parametrizing the code for flexibility/reusability
 * Comments and other readability improvements
 
-Use this command to see all changes: `git diff 0d196e6`
+Use the following command to see all changes: `git diff 0d196e6`
+
+Alternatively, use [GitHub's `compare` tool](https://github.com/ccmaymay/nhdp/compare/0d196e6...master).
 
 ## Notes
 
