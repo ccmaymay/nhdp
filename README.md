@@ -1,8 +1,10 @@
 # nHDP
 
 This repository is a modification of the [MATLAB nHDP code by John
-Paisley](http://www.columbia.edu/~jwp2128/code/nHDP.zip).  Changes
-include:
+Paisley](http://www.columbia.edu/~jwp2128/code/nHDP.zip), an implementation
+of the model introduced in ["Nested Hierarchical Dirichlet Processes" by Paisley,
+Wang, Blei, and Jordan (2014)](https://ieeexplore.ieee.org/document/6802355)
+([arxiv preprint](https://arxiv.org/abs/1210.6738)).  Changes include:
 
 * Using a sparse matrix format for the corpus
 * Creating a function for the training loop
